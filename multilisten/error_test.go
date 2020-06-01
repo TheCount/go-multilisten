@@ -1,7 +1,9 @@
 package multilisten
 
 import (
+	"errors"
 	"net"
+	"strings"
 	"testing"
 )
 
@@ -49,5 +51,39 @@ func TestGenericError(t *testing.T) {
 	}
 	if err.Temporary() {
 		t.Error("generic error flagged as temporary")
+	}
+}
+
+// TestWrappedError tests a wrapped error.
+func TestWrappedError(t *testing.T) {
+	const testMsg = "wrapped"
+	var err1 net.Error
+	err1 = &wrappedError{
+		op:      "test",
+		wrapped: errors.New(testMsg),
+	}
+	if !strings.HasSuffix(err1.Error(), testMsg) {
+		t.Errorf("Bad error message: %s", err1.Error())
+	}
+	if err1.Timeout() {
+		t.Errorf("Unexpected timeout error: %s", err1)
+	}
+	var err2 net.Error
+	err2 = &wrappedError{
+		op: "test",
+		wrapped: &net.DNSError{
+			Err:         testMsg,
+			Name:        "test",
+			Server:      "localhost",
+			IsTimeout:   true,
+			IsTemporary: false,
+		},
+		temporary: true,
+	}
+	if !err2.Timeout() {
+		t.Error("Expected timeout error")
+	}
+	if !err2.Temporary() {
+		t.Error("Expected temporary error")
 	}
 }
