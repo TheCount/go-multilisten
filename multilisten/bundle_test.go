@@ -50,11 +50,12 @@ func TestAddr(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer l.Close()
 	b, err := Bundle(l)
 	if err != nil {
+		l.Close()
 		t.Fatalf("Bundling single listener failed: %s", err)
 	}
+	defer b.Close()
 	origAddr := l.Addr()
 	bAddr := b.Addr()
 	if bAddr.Network() != origAddr.Network() {
