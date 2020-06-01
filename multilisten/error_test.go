@@ -33,3 +33,21 @@ func TestBasicErrorStopped(t *testing.T) {
 		t.Error("Expected Stopped() to return true")
 	}
 }
+
+// TestGenericError tests generic errors.
+func TestGenericError(t *testing.T) {
+	const testMsg = "test error msg"
+	var err net.Error
+	err = &genericError{
+		msg: testMsg,
+	}
+	if err.Error() != testMsg {
+		t.Errorf("Bad error message: %s", err.Error())
+	}
+	if err.Timeout() {
+		t.Error("generic error flagged as timeout")
+	}
+	if err.Temporary() {
+		t.Error("generic error flagged as temporary")
+	}
+}
