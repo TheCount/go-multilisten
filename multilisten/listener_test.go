@@ -42,3 +42,13 @@ func newPanickyListener() net.Listener {
 		close: func() error { return nil },
 	}
 }
+
+// newCloseErrorListener returns a listener whose Close method returns the
+// specified error.
+func newCloseErrorListener(err error) net.Listener {
+	return &mockListener{
+		addr:   func() net.Addr { return nil },
+		accept: func() (net.Conn, error) { return nil, nil },
+		close:  func() error { return err },
+	}
+}

@@ -1,6 +1,7 @@
 package multilisten
 
 import (
+	"errors"
 	"net"
 	"testing"
 	"time"
@@ -123,4 +124,18 @@ func TestPanickyListener(t *testing.T) {
 	defer b.Close()
 	b.Accept()
 	t.Fatal("Did not expect Accept to return")
+}
+
+// TestListenerCloseError tests listener close errors.
+func TestListenerCloseError(t *testing.T) {
+	testErr := errors.New("test error")
+	b, err := Bundle(newCloseErrorListener(testErr))
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = b.Close()
+	expectPermanentErr(t, err)
+	if !errors.Is(err, testErr) {
+		t.Fatal("Expected test error")
+	}
 }
