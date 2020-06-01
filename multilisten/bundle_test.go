@@ -9,12 +9,23 @@ import (
 const testListenAddr = "localhost:47831"
 
 // expectErr checks whether err has type Error.
-func expectErr(t *testing.T, err error) {
+// If so, it is returned.
+func expectErr(t *testing.T, err error) Error {
 	if err == nil {
 		t.Fatal("Expected non-nil error")
 	}
-	if _, ok := err.(Error); !ok {
+	x, ok := err.(Error)
+	if !ok {
 		t.Fatal("Expected error to be of type Error")
+	}
+	return x
+}
+
+// expectPermanentErr checks whether err is a permanent error of type Error.
+func expectPermanentErr(t *testing.T, err error) {
+	unpacked := expectErr(t, err)
+	if unpacked.Temporary() {
+		t.Fatal("Expected permanent error")
 	}
 }
 
@@ -53,4 +64,23 @@ func TestAddr(t *testing.T) {
 	if bAddr.String() != origAddr.String() {
 		t.Errorf("Addresses do not match: '%s' != '%s'", bAddr, origAddr)
 	}
+}
+
+// TestCloseBeforeAccept tests what happens when the bundled listener is closed
+// before Accept is called.
+func TestCloseBeforeAccept(t *testing.T) {
+	l, err := net.Listen("tcp", testListenAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := Bundle(l)
+	if err != nil {
+		l.Close()
+		t.Fatalf("Bundling single listener failed: %s", err)
+	}
+	if err = b.Close(); err != nil {
+		t.Errorf("Closing bundled listener failed: %s", err)
+	}
+	_, err = b.Accept()
+	expectPermanentErr(t, err)
 }
