@@ -34,3 +34,11 @@ func (l *mockListener) Close() error {
 	}
 	return l.close()
 }
+
+// newPanickyListener returns a listener which panics when Accept is called.
+func newPanickyListener() net.Listener {
+	return &mockListener{
+		addr:  func() net.Addr { return nil },
+		close: func() error { return nil },
+	}
+}

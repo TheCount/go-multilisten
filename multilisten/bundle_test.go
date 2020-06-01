@@ -108,3 +108,19 @@ func TestCloseWhileAccept(t *testing.T) {
 	err := <-done
 	expectPermanentErr(t, err)
 }
+
+// TestPanickyListener tests a panicky listener.
+func TestPanickyListener(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("Expected panic")
+		}
+	}()
+	b, err := Bundle(newPanickyListener())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer b.Close()
+	b.Accept()
+	t.Fatal("Did not expect Accept to return")
+}
