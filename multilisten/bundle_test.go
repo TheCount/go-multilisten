@@ -3,6 +3,7 @@ package multilisten
 import (
 	"net"
 	"testing"
+	"time"
 )
 
 // testListenAddr is a test listen address.
@@ -89,5 +90,21 @@ func TestCloseBeforeAccept(t *testing.T) {
 		t.Errorf("Closing bundled listener failed: %s", err)
 	}
 	_, err := b.Accept()
+	expectPermanentErr(t, err)
+}
+
+// TestCloseWhileAccept tests calling Close while Accept is in progress.
+func TestCloseWhileAccept(t *testing.T) {
+	b := bundleSingleListener(t)
+	done := make(chan error)
+	go func() {
+		_, err := b.Accept()
+		done <- err
+	}()
+	time.Sleep(time.Second)
+	if err := b.Close(); err != nil {
+		t.Fatalf("Error closing bundled listener: %s", err)
+	}
+	err := <-done
 	expectPermanentErr(t, err)
 }
