@@ -29,6 +29,20 @@ func expectPermanentErr(t *testing.T, err error) {
 	}
 }
 
+// bundleSingleListener returns a bundle with a single listener.
+func bundleSingleListener(t *testing.T) net.Listener {
+	l, err := net.Listen("tcp", testListenAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := Bundle(l)
+	if err != nil {
+		l.Close()
+		t.Fatalf("Bundling single listener failed: %s", err)
+	}
+	return b
+}
+
 // TestBundleNil tests calling bundle with nil listeners.
 func TestBundleNil(t *testing.T) {
 	_, err := Bundle(nil)
@@ -70,18 +84,10 @@ func TestAddr(t *testing.T) {
 // TestCloseBeforeAccept tests what happens when the bundled listener is closed
 // before Accept is called.
 func TestCloseBeforeAccept(t *testing.T) {
-	l, err := net.Listen("tcp", testListenAddr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := Bundle(l)
-	if err != nil {
-		l.Close()
-		t.Fatalf("Bundling single listener failed: %s", err)
-	}
-	if err = b.Close(); err != nil {
+	b := bundleSingleListener(t)
+	if err := b.Close(); err != nil {
 		t.Errorf("Closing bundled listener failed: %s", err)
 	}
-	_, err = b.Accept()
+	_, err := b.Accept()
 	expectPermanentErr(t, err)
 }
