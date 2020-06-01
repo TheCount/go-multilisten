@@ -32,3 +32,25 @@ func TestBundleNil(t *testing.T) {
 	_, err = Bundle(nil, l)
 	expectErr(t, err)
 }
+
+// TestAddr tests the address function of the bundled listener.
+func TestAddr(t *testing.T) {
+	l, err := net.Listen("tcp", testListenAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Close()
+	b, err := Bundle(l)
+	if err != nil {
+		t.Fatalf("Bundling single listener failed: %s", err)
+	}
+	origAddr := l.Addr()
+	bAddr := b.Addr()
+	if bAddr.Network() != origAddr.Network() {
+		t.Errorf("Networks do not match: '%s' != '%s'",
+			bAddr.Network(), origAddr.Network())
+	}
+	if bAddr.String() != origAddr.String() {
+		t.Errorf("Addresses do not match: '%s' != '%s'", bAddr, origAddr)
+	}
+}
