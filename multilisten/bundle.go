@@ -108,7 +108,10 @@ func (b *bundle) Accept() (net.Conn, error) {
 			info.err.temporary = false
 		}
 	}
-	return info.conn, info.err
+	if info.err == nil {
+		return info.conn, nil
+	}
+	return nil, info.err
 }
 
 // Addr implements net.Listener.
