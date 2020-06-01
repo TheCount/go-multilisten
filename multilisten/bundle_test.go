@@ -2,6 +2,7 @@ package multilisten
 
 import (
 	"errors"
+	"math/rand"
 	"net"
 	"testing"
 	"time"
@@ -137,5 +138,58 @@ func TestListenerCloseError(t *testing.T) {
 	expectPermanentErr(t, err)
 	if !errors.Is(err, testErr) {
 		t.Fatal("Expected test error")
+	}
+}
+
+// TestRandomListener tests listeners with random behaviour.
+func TestRandomListener(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping long TestRandomListener")
+	}
+	now := time.Now()
+	rand.Seed(now.Unix() + int64(now.Nanosecond()))
+	var numAccepts int32
+	listeners := make([]net.Listener, 100)
+	for i := range listeners {
+		listeners[i] = newRandomListener(&numAccepts, time.Second, 0.1)
+	}
+	b, err := Bundle(newRandomListener(&numAccepts, time.Second, 0.1),
+		listeners...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var localAccepts int32
+	for {
+		localAccepts++
+		conn, err := b.Accept()
+		if err == nil {
+			if conn == nil {
+				t.Error("Got nil connection")
+			}
+		} else {
+			unpacked := expectErr(t, err)
+			if !unpacked.Temporary() {
+				if !unpacked.Stopped() {
+					t.Error("Expected permanent error due to stopped listener")
+				}
+				break
+			}
+		}
+	}
+	if numAccepts != localAccepts {
+		t.Errorf("Accept count discrepany (%d vs. %d)", numAccepts, localAccepts)
+	}
+	_, err = b.Accept()
+	unpacked := expectErr(t, err)
+	if unpacked.Temporary() || unpacked.Listener() != nil {
+		t.Errorf("Expected final accept to fail permanently without specific "+
+			"listener, got %s", unpacked)
+	}
+	if numAccepts != localAccepts {
+		t.Errorf("Accept count discrepany after final accept (%d vs. %d)",
+			numAccepts, localAccepts)
+	}
+	if numAccepts < 100 || numAccepts > 10000 {
+		t.Errorf("Number of accepts suspicious: %d", numAccepts)
 	}
 }
