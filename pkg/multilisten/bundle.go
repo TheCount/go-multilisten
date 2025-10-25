@@ -19,14 +19,14 @@ type acceptInfo struct {
 	// recovered is non-nil if the accepting goroutine exited due to a panic.
 	// The goroutine will have recovered, so that the main Accept can re-raise
 	// the panic.
-	recovered interface{}
+	recovered any
 }
 
 // bundle represents a bundle of listeners. It implements the net.Listener
 // interface.
 type bundle struct {
 	// active is the number of currently active listeners.
-	active int64
+	active atomic.Int64
 
 	// once guards starting the Accept goroutines.
 	once sync.Once
@@ -81,7 +81,7 @@ func (b *bundle) runAccept(l net.Listener) {
 // once.
 func (b *bundle) start() {
 	b.info = make(chan acceptInfo, len(b.listeners))
-	atomic.StoreInt64(&b.active, int64(len(b.listeners)))
+	b.active.Store(int64(len(b.listeners)))
 	for _, l := range b.listeners {
 		go b.runAccept(l)
 	}
@@ -97,13 +97,13 @@ func (b *bundle) Accept() (net.Conn, error) {
 		}
 	}
 	if info.recovered != nil {
-		if atomic.AddInt64(&b.active, -1) == 0 {
+		if b.active.Add(-1) == 0 {
 			close(b.info)
 		}
 		panic(info.recovered)
 	}
 	if info.err != nil && info.err.stopped {
-		if atomic.AddInt64(&b.active, -1) == 0 {
+		if b.active.Add(-1) == 0 {
 			close(b.info)
 			info.err.temporary = false
 		}

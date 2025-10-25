@@ -2,7 +2,6 @@ package multilisten
 
 import (
 	"errors"
-	"math/rand"
 	"net"
 	"testing"
 	"time"
@@ -146,8 +145,6 @@ func TestRandomListener(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping long TestRandomListener")
 	}
-	now := time.Now()
-	rand.Seed(now.Unix() + int64(now.Nanosecond()))
 	var numAccepts int32
 	listeners := make([]net.Listener, 100)
 	for i := range listeners {

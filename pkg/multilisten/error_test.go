@@ -39,8 +39,7 @@ func TestBasicErrorStopped(t *testing.T) {
 // TestGenericError tests generic errors.
 func TestGenericError(t *testing.T) {
 	const testMsg = "test error msg"
-	var err net.Error
-	err = &genericError{
+	var err net.Error = &genericError{
 		msg: testMsg,
 	}
 	if err.Error() != testMsg {
@@ -57,8 +56,7 @@ func TestGenericError(t *testing.T) {
 // TestWrappedError tests a wrapped error.
 func TestWrappedError(t *testing.T) {
 	const testMsg = "wrapped"
-	var err1 net.Error
-	err1 = &wrappedError{
+	var err1 net.Error = &wrappedError{
 		op:      "test",
 		wrapped: errors.New(testMsg),
 	}
@@ -68,8 +66,7 @@ func TestWrappedError(t *testing.T) {
 	if err1.Timeout() {
 		t.Errorf("Unexpected timeout error: %s", err1)
 	}
-	var err2 net.Error
-	err2 = &wrappedError{
+	var err2 net.Error = &wrappedError{
 		op: "test",
 		wrapped: &net.DNSError{
 			Err:         testMsg,

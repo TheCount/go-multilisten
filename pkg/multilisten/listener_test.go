@@ -2,7 +2,7 @@ package multilisten
 
 import (
 	"errors"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"sync/atomic"
 	"time"
