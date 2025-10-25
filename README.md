@@ -1,7 +1,7 @@
 # multilisten
 
 ![](https://github.com/TheCount/go-multilisten/workflows/CI/badge.svg)
-[![Documentation](https://godoc.org/github.com/TheCount/go-multilisten/multilisten?status.svg)](https://godoc.org/github.com/TheCount/go-multilisten/multilisten)
+[![Documentation](https://pkg.go.dev/github.com/TheCount/go-multilisten/pkg/multilisten?status.svg)](https://pkg.go.dev/github.com/TheCount/go-multilisten/pkg/multilisten)
 
 multilisten is a Go package for bundling multiple net.Listeners into a single one.
 
@@ -9,13 +9,15 @@ This package is useful when a third-party package expects a single `net.Listener
 
 ## Install
 
+In your `go.mod` directory, run:
 ```sh
-go get github.com/TheCount/go-multilisten/multilisten
+go get github.com/TheCount/go-multilisten/pkg/multilisten
 ```
+See also https://go.dev/doc/modules/managing-dependencies#workflow.
 
 ## Usage
 
-For the detailed API, see the [Documentation](https://godoc.org/github.com/TheCount/go-multilisten/multilisten).
+For the detailed API, see the [Documentation](https://pkg.go.dev/github.com/TheCount/go-multilisten/pkg/multilisten).
 
 Essentially, all you have to do is bundle your listeners like this:
 
