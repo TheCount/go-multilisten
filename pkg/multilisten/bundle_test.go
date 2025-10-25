@@ -177,7 +177,7 @@ func TestRandomListener(t *testing.T) {
 		}
 	}
 	if numAccepts != localAccepts {
-		t.Errorf("Accept count discrepany (%d vs. %d)", numAccepts, localAccepts)
+		t.Errorf("Accept count discrepancy (%d vs. %d)", numAccepts, localAccepts)
 	}
 	_, err = b.Accept()
 	unpacked := expectErr(t, err)
@@ -186,7 +186,7 @@ func TestRandomListener(t *testing.T) {
 			"listener, got %s", unpacked)
 	}
 	if numAccepts != localAccepts {
-		t.Errorf("Accept count discrepany after final accept (%d vs. %d)",
+		t.Errorf("Accept count discrepancy after final accept (%d vs. %d)",
 			numAccepts, localAccepts)
 	}
 	if numAccepts < 100 || numAccepts > 10000 {
