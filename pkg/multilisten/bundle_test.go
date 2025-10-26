@@ -3,7 +3,6 @@ package multilisten
 import (
 	"errors"
 	"net"
-	"runtime/debug"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -15,8 +14,8 @@ const testListenAddr = "localhost:47831"
 // expectErr checks whether err has type Error.
 // If so, it is returned.
 func expectErr(t *testing.T, err error) Error {
+	t.Helper()
 	if err == nil {
-		debug.PrintStack()
 		t.Fatal("Expected non-nil error")
 	}
 	x, ok := err.(Error)
