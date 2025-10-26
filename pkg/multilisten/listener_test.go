@@ -58,19 +58,19 @@ func newCloseErrorListener(err error) net.Listener {
 }
 
 // newRandomListener creates a listener with random Accept behaviour. For each
-// call to accept, the returned listener will increment *numAccepts atomically.
+// call to accept, the returned listener will increment numAccepts.
 // Each Accept call takes a uniform random time from zero to maxAcceptTime.
 // The failChance is the chance that the accept method returns an error.
 func newRandomListener(
-	numAccepts *int32, maxAcceptTime time.Duration, failChance float32,
+	numAccepts *atomic.Int32, maxAcceptTime time.Duration, failChance float32,
 ) net.Listener {
 	done := false
-	var closed int32
+	var closed atomic.Bool
 	return &mockListener{
 		addr: func() net.Addr { return nil },
 		accept: func() (net.Conn, error) {
-			defer atomic.AddInt32(numAccepts, 1)
-			if atomic.LoadInt32(&closed) != 0 {
+			defer numAccepts.Add(1)
+			if closed.Load() {
 				return nil, &genericError{msg: "listener closed"}
 			}
 			if done {
@@ -88,10 +88,10 @@ func newRandomListener(
 			return mockConn{}, nil
 		},
 		close: func() error {
-			if atomic.LoadInt32(&closed) != 0 {
+			if closed.Load() {
 				return &genericError{msg: "listener already closed"}
 			}
-			atomic.StoreInt32(&closed, 1)
+			closed.Store(true)
 			return nil
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"runtime/debug"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -139,7 +140,7 @@ func TestRandomListener(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping long TestRandomListener")
 	}
-	var numAccepts int32
+	var numAccepts atomic.Int32
 	listeners := make([]net.Listener, 100)
 	for i := range listeners {
 		listeners[i] = newRandomListener(&numAccepts, time.Second, 0.1)
@@ -165,7 +166,7 @@ func TestRandomListener(t *testing.T) {
 			}
 		}
 	}
-	if numAccepts != localAccepts {
+	if numAccepts := numAccepts.Load(); numAccepts != localAccepts {
 		t.Errorf("Accept count discrepancy (%d vs. %d)", numAccepts, localAccepts)
 	}
 	_, err = b.Accept()
@@ -174,11 +175,11 @@ func TestRandomListener(t *testing.T) {
 		t.Errorf("Expected final accept to fail without specific "+
 			"listener, got %s", unpacked)
 	}
-	if numAccepts != localAccepts {
+	if numAccepts := numAccepts.Load(); numAccepts != localAccepts {
 		t.Errorf("Accept count discrepancy after final accept (%d vs. %d)",
 			numAccepts, localAccepts)
 	}
-	if numAccepts < 100 || numAccepts > 10000 {
+	if numAccepts := numAccepts.Load(); numAccepts < 100 || numAccepts > 10000 {
 		t.Errorf("Number of accepts suspicious: %d", numAccepts)
 	}
 }
