@@ -61,7 +61,6 @@ func newCloseErrorListener(err error) net.Listener {
 // call to accept, the returned listener will increment *numAccepts atomically.
 // Each Accept call takes a uniform random time from zero to maxAcceptTime.
 // The failChance is the chance that the accept method returns an error.
-// On average half of these errors will be permanent.
 func newRandomListener(
 	numAccepts *int32, maxAcceptTime time.Duration, failChance float32,
 ) net.Listener {
@@ -83,11 +82,7 @@ func newRandomListener(
 					op:      "accept",
 					wrapped: errors.New("failed"),
 				}
-				if rand.Float32() < 0.5 {
-					err.temporary = true
-				} else {
-					done = true
-				}
+				done = true
 				return nil, err
 			}
 			return mockConn{}, nil

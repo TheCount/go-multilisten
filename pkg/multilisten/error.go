@@ -5,6 +5,11 @@ import (
 	"net"
 )
 
+// ErrNoMoreListeners is returned when all listeners in a bundle have stopped.
+var ErrNoMoreListeners Error = &genericError{
+	msg: "all listeners stopped",
+}
+
 // Error is the interface implemented by errors produced by this package.
 type Error interface {
 	net.Error
@@ -12,30 +17,17 @@ type Error interface {
 	// Listener returns the listener on which the error originally occurred.
 	// If the error is not listener-specific, this is nil.
 	Listener() net.Listener
-
-	// Stopped reports whether listening on the listener returned by Listener
-	// was stopped due to the error.
-	Stopped() bool
 }
 
 // basicError is basic component of all multilisten errors.
 type basicError struct {
 	// listener is the listener which caused the error, or nil.
 	listener net.Listener
-
-	// stopped indicates whether listening on listener has been stopped.
-	// If listener is nil, stopped is false.
-	stopped bool
 }
 
 // Listener implements Error.
 func (err *basicError) Listener() net.Listener {
 	return err.listener
-}
-
-// Stopped implements Error.
-func (err *basicError) Stopped() bool {
-	return err.stopped
 }
 
 // genericError is the generic error structure for non-temporary, non-timeout
@@ -71,9 +63,6 @@ type wrappedError struct {
 
 	// wrapped is the wrapped error.
 	wrapped error
-
-	// temporary indicates whether this error is temporary.
-	temporary bool
 }
 
 // Error implements error.
@@ -88,7 +77,8 @@ func (err *wrappedError) Timeout() bool {
 
 // Temporary returns whether this is a temporary error.
 func (err *wrappedError) Temporary() bool {
-	return err.temporary
+	// Note: as of Go 1.18, net.Error.Temporary is deprecated.
+	return err.Timeout()
 }
 
 // Unwrap returns the wrapped error.

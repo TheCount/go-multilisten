@@ -62,16 +62,12 @@ func (b *bundle) runAccept(l net.Listener) {
 				basicError: basicError{
 					listener: l,
 				},
-				op:        "accept",
-				wrapped:   err,
-				temporary: true, // assume true due to other possible listeners
-			}
-			if x, ok := err.(interface{ Temporary() bool }); !ok || !x.Temporary() {
-				info.err.stopped = true
+				op:      "accept",
+				wrapped: err,
 			}
 		}
 		b.info <- info
-		if info.err != nil && info.err.stopped {
+		if info.err != nil {
 			return
 		}
 	}
@@ -92,9 +88,7 @@ func (b *bundle) Accept() (net.Conn, error) {
 	b.once.Do(b.start)
 	info, ok := <-b.info
 	if !ok {
-		return nil, &genericError{
-			msg: "all listeners stopped",
-		}
+		return nil, ErrNoMoreListeners
 	}
 	if info.recovered != nil {
 		if b.active.Add(-1) == 0 {
@@ -102,16 +96,14 @@ func (b *bundle) Accept() (net.Conn, error) {
 		}
 		panic(info.recovered)
 	}
-	if info.err != nil && info.err.stopped {
+	if info.err != nil {
 		if b.active.Add(-1) == 0 {
 			close(b.info)
-			info.err.temporary = false
 		}
+		return nil, info.err
 	}
-	if info.err == nil {
-		return info.conn, nil
-	}
-	return nil, info.err
+
+	return info.conn, nil
 }
 
 // Addr implements net.Listener.
@@ -127,7 +119,6 @@ func (b *bundle) Close() error {
 			err = &wrappedError{
 				basicError: basicError{
 					listener: l,
-					stopped:  true,
 				},
 				op:      "close",
 				wrapped: err2,
@@ -141,11 +132,10 @@ func (b *bundle) Close() error {
 // provides the address of the returned bundled listener.
 //
 // The Accept method of the returned listener will call Accept on all listeners
-// concurrently and return the first connection thus obtained. If a sub-Access
-// call returns an error, listening on that listener will stop if and only
-// if the error is not temporary. The main accept method will wrap the error
-// into an Error and set it to non-temporary only if the sub-Accept was on the
-// last remaining listener.
+// concurrently and return the first connection thus obtained. If a sub-Accept
+// call returns an error, listening on that listener will stop.
+// The main accept method will wrap that the error
+// into an [Error] and return it.
 //
 // The Close method of the returned listener will close all underlying
 // listeners. Close returns the first error it encounters, or nil if none.

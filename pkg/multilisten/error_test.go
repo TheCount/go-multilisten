@@ -24,18 +24,6 @@ func TestBasicErrorListener(t *testing.T) {
 	}
 }
 
-// TestBasicErrorStopped tests the stopped field in a basicError.
-func TestBasicErrorStopped(t *testing.T) {
-	bErr := &basicError{}
-	if bErr.Stopped() {
-		t.Error("Expected Stopped() to return false")
-	}
-	bErr.stopped = true
-	if !bErr.Stopped() {
-		t.Error("Expected Stopped() to return true")
-	}
-}
-
 // TestGenericError tests generic errors.
 func TestGenericError(t *testing.T) {
 	const testMsg = "test error msg"
@@ -47,9 +35,6 @@ func TestGenericError(t *testing.T) {
 	}
 	if err.Timeout() {
 		t.Error("generic error flagged as timeout")
-	}
-	if err.Temporary() {
-		t.Error("generic error flagged as temporary")
 	}
 }
 
@@ -69,18 +54,13 @@ func TestWrappedError(t *testing.T) {
 	var err2 net.Error = &wrappedError{
 		op: "test",
 		wrapped: &net.DNSError{
-			Err:         testMsg,
-			Name:        "test",
-			Server:      "localhost",
-			IsTimeout:   true,
-			IsTemporary: false,
+			Err:       testMsg,
+			Name:      "test",
+			Server:    "localhost",
+			IsTimeout: true,
 		},
-		temporary: true,
 	}
 	if !err2.Timeout() {
 		t.Error("Expected timeout error")
-	}
-	if !err2.Temporary() {
-		t.Error("Expected temporary error")
 	}
 }

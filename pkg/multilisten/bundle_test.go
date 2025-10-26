@@ -3,6 +3,7 @@ package multilisten
 import (
 	"errors"
 	"net"
+	"runtime/debug"
 	"testing"
 	"time"
 )
@@ -14,6 +15,7 @@ const testListenAddr = "localhost:47831"
 // If so, it is returned.
 func expectErr(t *testing.T, err error) Error {
 	if err == nil {
+		debug.PrintStack()
 		t.Fatal("Expected non-nil error")
 	}
 	x, ok := err.(Error)
@@ -21,14 +23,6 @@ func expectErr(t *testing.T, err error) Error {
 		t.Fatal("Expected error to be of type Error")
 	}
 	return x
-}
-
-// expectPermanentErr checks whether err is a permanent error of type Error.
-func expectPermanentErr(t *testing.T, err error) {
-	unpacked := expectErr(t, err)
-	if unpacked.Temporary() {
-		t.Fatal("Expected permanent error")
-	}
 }
 
 // bundleSingleListener returns a bundle with a single listener.
@@ -91,7 +85,7 @@ func TestCloseBeforeAccept(t *testing.T) {
 		t.Errorf("Closing bundled listener failed: %s", err)
 	}
 	_, err := b.Accept()
-	expectPermanentErr(t, err)
+	expectErr(t, err)
 }
 
 // TestCloseWhileAccept tests calling Close while Accept is in progress.
@@ -107,7 +101,7 @@ func TestCloseWhileAccept(t *testing.T) {
 		t.Fatalf("Error closing bundled listener: %s", err)
 	}
 	err := <-done
-	expectPermanentErr(t, err)
+	expectErr(t, err)
 }
 
 // TestPanickyListener tests a panicky listener.
@@ -134,7 +128,7 @@ func TestListenerCloseError(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = b.Close()
-	expectPermanentErr(t, err)
+	expectErr(t, err)
 	if !errors.Is(err, testErr) {
 		t.Fatal("Expected test error")
 	}
@@ -165,10 +159,8 @@ func TestRandomListener(t *testing.T) {
 			}
 		} else {
 			unpacked := expectErr(t, err)
-			if !unpacked.Temporary() {
-				if !unpacked.Stopped() {
-					t.Error("Expected permanent error due to stopped listener")
-				}
+			if unpacked == ErrNoMoreListeners {
+				localAccepts--
 				break
 			}
 		}
@@ -178,8 +170,8 @@ func TestRandomListener(t *testing.T) {
 	}
 	_, err = b.Accept()
 	unpacked := expectErr(t, err)
-	if unpacked.Temporary() || unpacked.Listener() != nil {
-		t.Errorf("Expected final accept to fail permanently without specific "+
+	if unpacked.Listener() != nil {
+		t.Errorf("Expected final accept to fail without specific "+
 			"listener, got %s", unpacked)
 	}
 	if numAccepts != localAccepts {
