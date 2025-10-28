@@ -39,6 +39,16 @@ func (l *mockListener) Close() error {
 	return l.close()
 }
 
+func newListener() net.Listener {
+	return &mockListener{
+		addr: func() net.Addr { return mockAddr("ListenerMcEarface:2345") },
+		accept: func() (net.Conn, error) {
+			return mockConn{}, nil
+		},
+		close: func() error { return nil },
+	}
+}
+
 // newPanickyListener returns a listener which panics when Accept is called.
 func newPanickyListener() net.Listener {
 	return &mockListener{
