@@ -18,7 +18,7 @@ func expectErr(t *testing.T, err error) Error {
 	if err == nil {
 		t.Fatal("Expected non-nil error")
 	}
-	x, ok := err.(Error)
+	x, ok := err.(Error) //nolint errorlint
 	if !ok {
 		t.Fatal("Expected error to be of type Error")
 	}
@@ -42,16 +42,16 @@ func bundleSingleListener(t *testing.T) net.Listener {
 // TestBundleNil tests calling bundle with nil listeners.
 func TestBundleNil(t *testing.T) {
 	_, err := Bundle(nil)
-	expectErr(t, err)
+	_ = expectErr(t, err)
 	l, err := net.Listen("tcp", testListenAddr)
 	if err != nil {
 		t.Fatal(l)
 	}
 	defer l.Close()
 	_, err = Bundle(l, nil)
-	expectErr(t, err)
+	_ = expectErr(t, err)
 	_, err = Bundle(nil, l)
-	expectErr(t, err)
+	_ = expectErr(t, err)
 }
 
 // TestAddr tests the address function of the bundled listener.
@@ -85,7 +85,7 @@ func TestCloseBeforeAccept(t *testing.T) {
 		t.Errorf("Closing bundled listener failed: %s", err)
 	}
 	_, err := b.Accept()
-	expectErr(t, err)
+	_ = expectErr(t, err)
 }
 
 // TestCloseWhileAccept tests calling Close while Accept is in progress.
@@ -101,7 +101,7 @@ func TestCloseWhileAccept(t *testing.T) {
 		t.Fatalf("Error closing bundled listener: %s", err)
 	}
 	err := <-done
-	expectErr(t, err)
+	_ = expectErr(t, err)
 }
 
 // TestPanickyListener tests a panicky listener.
@@ -116,7 +116,7 @@ func TestPanickyListener(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer b.Close()
-	b.Accept()
+	b.Accept() //nolint panic expected
 	t.Fatal("Did not expect Accept to return")
 }
 
@@ -128,7 +128,7 @@ func TestListenerCloseError(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = b.Close()
-	expectErr(t, err)
+	_ = expectErr(t, err)
 	if !errors.Is(err, testErr) {
 		t.Fatal("Expected test error")
 	}
