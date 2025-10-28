@@ -23,7 +23,10 @@ func (s *Set) Accept() (net.Conn, error) {
 		if info.recovered != nil {
 			panic(info.recovered)
 		}
-		return info.conn, info.err
+		if info.err != nil {
+			return nil, info.err
+		}
+		return info.conn, nil
 	case <-s.closed:
 		return nil, net.ErrClosed
 	}
