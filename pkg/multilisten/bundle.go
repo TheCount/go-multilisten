@@ -123,6 +123,9 @@ func (b *bundle) Close() error {
 //
 // The Close method of the returned listener will close all underlying
 // listeners. Close returns the first error it encounters, or nil if none.
+//
+// Also consider using [NewSet] instead,
+// which provides a more flexible API.
 func Bundle(main net.Listener, more ...net.Listener) (net.Listener, error) {
 	if main == nil {
 		return nil, &genericError{
